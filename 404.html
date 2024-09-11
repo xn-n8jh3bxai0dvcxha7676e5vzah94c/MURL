@@ -10,6 +10,38 @@
     <div id="result"></div>
 
     <script>
+        // Encryptorクラス
+        class Encryptor {
+            constructor(repeatCount) {
+                this.repeatCount = repeatCount; // 繰り返し回数
+            }
+
+            // 解読メソッド
+            decrypt(encryptedData) {
+                let data1 = encryptedData.slice(0, encryptedData.length / 2);
+                let data2 = encryptedData.slice(encryptedData.length / 2);
+
+                for (let i = 0; i < this.repeatCount; i++) {
+                    let newData1 = '';
+                    let newData2 = '';
+
+                    for (let j = 0; j < data1.length; j++) {
+                        if (data1[j] === '0') {
+                            newData1 += (data2[j] === '1') ? '1' : '0'; // ビット逆転処理を逆に実行
+                        } else {
+                            newData1 += data1[j];
+                        }
+                        newData2 += data2[j]; // データ2をそのままコピー
+                    }
+
+                    data1 = newData1;
+                    data2 = newData2;
+                }
+
+                return data1 + data2; // 最終的なデータを結合して返す
+            }
+        }
+
         // 現在のURLを取得し、Base64部分を抽出
         const inputUrl = window.location.href;
         const base64 = inputUrl.split('/').pop(); // URLの最後の部分をBase64として取得
@@ -22,13 +54,14 @@
 
             // Base64キーをWordArrayに戻す
             const key = CryptoJS.enc.Base64.parse(base64Key);
-
+            const decryptor = new Encryptor(5); // 繰り返し回数を指定
+            
             // URLとパスワードを解読
-            const decryptedUrl = CryptoJS.AES.decrypt(encryptedUrl, key).toString(CryptoJS.enc.Utf8);
+            const decryptedUrl = decryptor.decrypt(encryptedUrl);
             let decryptedPassword = null;
 
             if (encryptedPassword) {
-                decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, key).toString(CryptoJS.enc.Utf8);
+                decryptedPassword = decryptor.decrypt(encryptedPassword);
                 // パスワード入力欄を表示
                 document.getElementById('result').innerHTML = `
                     <p>パスワードを入力してください:</p>
@@ -59,7 +92,6 @@
                     }
                 });
             }
-
         } catch (error) {
             document.getElementById('result').innerText = 'エラー: 無効な入力です。';
         }
