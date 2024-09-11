@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>URLリダイレクトサービス</title>
+    <script>
+        window.onload = function() {
+            // 現在のURLから短縮URL部分を取得
+            const currentUrl = window.location.href;
+            const urlParts = currentUrl.split('/');
+            const encodedUrl = urlParts[urlParts.length - 1]; // 最後の部分が識別子
+
+            try {
+                // Base64デコード
+                const originalUrl = atob(encodedUrl); // atobを使ってデコード
+                console.log("元のURL:", originalUrl);
+
+                // 元のURLにリダイレクト
+                window.location.href = originalUrl;
+            } catch (error) {
+                console.error("デコードエラー:", error);
+                document.body.innerHTML = '<h1>不正なURLです。</h1>';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>リダイレクト中...</h1>
+</body>
+</html>
