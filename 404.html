@@ -2,29 +2,67 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>URLリダイレクトサービス</title>
-    <script>
-        window.onload = function() {
-            // 現在のURLから短縮URL部分を取得
-            const currentUrl = window.location.href;
-            const urlParts = currentUrl.split('/');
-            const encodedUrl = urlParts[urlParts.length - 1]; // 最後の部分が識別子
-
-            try {
-                // Base64デコード
-                const originalUrl = atob(encodedUrl); // atobを使ってデコード
-                console.log("元のURL:", originalUrl);
-
-                // 元のURLにリダイレクト
-                window.location.href = originalUrl;
-            } catch (error) {
-                console.error("デコードエラー:", error);
-                document.body.innerHTML = '<h1>不正なURLです。</h1>';
-            }
-        }
-    </script>
+    <title>URL解読ツール</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
 </head>
 <body>
-    <h1>リダイレクト中...</h1>
+    <h1>URL解読ツール</h1>
+    <div id="result"></div>
+
+    <script>
+        // 現在のURLを取得し、Base64部分を抽出
+        const inputUrl = window.location.href;
+        const base64 = inputUrl.split('/').pop(); // URLの最後の部分をBase64として取得
+
+        try {
+            const json = JSON.parse(atob(base64)); // Base64をデコードしてJSONに変換
+            const encryptedUrl = json.u;
+            const encryptedPassword = json.p;
+            const base64Key = json.k;
+
+            // Base64キーをWordArrayに戻す
+            const key = CryptoJS.enc.Base64.parse(base64Key);
+
+            // URLとパスワードを解読
+            const decryptedUrl = CryptoJS.AES.decrypt(encryptedUrl, key).toString(CryptoJS.enc.Utf8);
+            let decryptedPassword = null;
+
+            if (encryptedPassword) {
+                decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, key).toString(CryptoJS.enc.Utf8);
+                // パスワード入力欄を表示
+                document.getElementById('result').innerHTML = `
+                    <p>パスワードを入力してください:</p>
+                    <input type="text" id="passwordInput" placeholder="パスワード">
+                    <button id="passwordSubmitButton">OK</button>
+                `;
+            } else {
+                // パスワードが不要な場合、すぐに転送
+                document.getElementById('result').innerText = '転送中...';
+                setTimeout(() => {
+                    window.location.href = decryptedUrl; // 直接転送
+                }, 0); // 0秒後に転送
+            }
+
+            // パスワード入力ボタンを設定
+            if (encryptedPassword) {
+                document.getElementById('result').addEventListener('click', function(event) {
+                    if (event.target.id === 'passwordSubmitButton') {
+                        const enteredPassword = document.getElementById('passwordInput').value;
+                        if (enteredPassword === decryptedPassword) {
+                            document.getElementById('result').innerText = '転送中...';
+                            setTimeout(() => {
+                                window.location.href = decryptedUrl; // 一致した場合に転送
+                            }, 0); // 0秒後に転送
+                        } else {
+                            document.getElementById('result').innerText = 'パスワードが一致しません。';
+                        }
+                    }
+                });
+            }
+
+        } catch (error) {
+            document.getElementById('result').innerText = 'エラー: 無効な入力です。';
+        }
+    </script>
 </body>
 </html>
