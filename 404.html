@@ -2,99 +2,36 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>URL解読ツール</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <title>IDによるリダイレクト</title>
+    <script>
+        function redirectToUrl() {
+            // URLのパスを取得
+            const path = window.location.pathname;
+            const id = path.split('/')[1];
+
+            // データベース
+            const fileUrl = `https://url.hyperdatabase.i-i.f5.si/${id}.txt`;
+
+            // テキストファイルの内容を取得
+            fetch(fileUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('ファイルの読み込みエラー');
+                    }
+                    return response.text(); // テキスト形式でレスポンスを取得
+                })
+                .then(url => {
+                    window.location.href = url.trim(); // URLにリダイレクト
+                })
+                .catch(error => {
+                    console.error('エラー:', error);
+                });
+        }
+
+        window.onload = redirectToUrl; // ページ読み込み時に実行
+    </script>
 </head>
 <body>
-    <h1>URL解読ツール</h1>
-    <div id="result"></div>
-
-    <script>
-        // Encryptorクラス
-        class Encryptor {
-            constructor(repeatCount) {
-                this.repeatCount = repeatCount; // 繰り返し回数
-            }
-
-            // 解読メソッド
-            decrypt(encryptedData) {
-                let data1 = encryptedData.slice(0, encryptedData.length / 2);
-                let data2 = encryptedData.slice(encryptedData.length / 2);
-
-                for (let i = 0; i < this.repeatCount; i++) {
-                    let newData1 = '';
-                    let newData2 = '';
-
-                    for (let j = 0; j < data1.length; j++) {
-                        if (data1[j] === '0') {
-                            newData1 += (data2[j] === '1') ? '1' : '0'; // ビット逆転処理を逆に実行
-                        } else {
-                            newData1 += data1[j];
-                        }
-                        newData2 += data2[j]; // データ2をそのままコピー
-                    }
-
-                    data1 = newData1;
-                    data2 = newData2;
-                }
-
-                return data1 + data2; // 最終的なデータを結合して返す
-            }
-        }
-
-        // 現在のURLを取得し、Base64部分を抽出
-        const inputUrl = window.location.href;
-        const base64 = inputUrl.split('/').pop(); // URLの最後の部分をBase64として取得
-
-        try {
-            const json = JSON.parse(atob(base64)); // Base64をデコードしてJSONに変換
-            const encryptedUrl = json.u;
-            const encryptedPassword = json.p;
-            const base64Key = json.k;
-
-            // Base64キーをWordArrayに戻す
-            const key = CryptoJS.enc.Base64.parse(base64Key);
-            const decryptor = new Encryptor(5); // 繰り返し回数を指定
-            
-            // URLとパスワードを解読
-            const decryptedUrl = decryptor.decrypt(encryptedUrl);
-            let decryptedPassword = null;
-
-            if (encryptedPassword) {
-                decryptedPassword = decryptor.decrypt(encryptedPassword);
-                // パスワード入力欄を表示
-                document.getElementById('result').innerHTML = `
-                    <p>パスワードを入力してください:</p>
-                    <input type="text" id="passwordInput" placeholder="パスワード">
-                    <button id="passwordSubmitButton">OK</button>
-                `;
-            } else {
-                // パスワードが不要な場合、すぐに転送
-                document.getElementById('result').innerText = '転送中...';
-                setTimeout(() => {
-                    window.location.href = decryptedUrl; // 直接転送
-                }, 0); // 0秒後に転送
-            }
-
-            // パスワード入力ボタンを設定
-            if (encryptedPassword) {
-                document.getElementById('result').addEventListener('click', function(event) {
-                    if (event.target.id === 'passwordSubmitButton') {
-                        const enteredPassword = document.getElementById('passwordInput').value;
-                        if (enteredPassword === decryptedPassword) {
-                            document.getElementById('result').innerText = '転送中...';
-                            setTimeout(() => {
-                                window.location.href = decryptedUrl; // 一致した場合に転送
-                            }, 0); // 0秒後に転送
-                        } else {
-                            document.getElementById('result').innerText = 'パスワードが一致しません。';
-                        }
-                    }
-                });
-            }
-        } catch (error) {
-            document.getElementById('result').innerText = 'エラー: 無効な入力です。';
-        }
-    </script>
+    <h1>リダイレクト中...</h1>
 </body>
 </html>
