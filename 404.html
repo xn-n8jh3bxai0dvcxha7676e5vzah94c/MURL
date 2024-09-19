@@ -2,12 +2,15 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>リダイレクトfor登録制URL短縮サイト</title>
+    <title>url</title>
     <script>
         function redirectToUrl() {
             // URLのパスを取得
             const path = window.location.pathname;
             const id = path.split('/')[1];
+            document.titel='id'
+
+
 
             // データベース
             const fileUrl = `https://url.hyperdatabase.i-i.f5.si/${id}.txt`;
